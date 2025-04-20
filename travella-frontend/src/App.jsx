@@ -1,21 +1,15 @@
 import React, { useState } from "react";
-import axios from "axios";
-import "./App.css";
 import { useNavigate } from "react-router-dom";
-
+import "./App.css";
 
 function App() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [city, setCity] = useState("");
   const [budgetAmount, setBudgetAmount] = useState("");
-  const [countryCurrency, setCountryCurrency] = useState(null);
-  const [exchangeRate, setExchangeRate] = useState(null);
   const [selectedActivities, setSelectedActivities] = useState([]);
-  const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
 
   const activities = [
     "Museums",
@@ -25,7 +19,7 @@ function App() {
     "Beaches",
     "Food & Restaurants",
     "Adventure Sports",
-    "Cultural Events"
+    "Cultural Events",
   ];
 
   const toggleActivity = (activity) => {
@@ -34,29 +28,6 @@ function App() {
         ? prev.filter((a) => a !== activity)
         : [...prev, activity]
     );
-  };
-
-  const fetchCurrency = async (cityName) => {
-    try {
-      const countryRes = await axios.get(
-        `https://restcountries.com/v3.1/capital/${cityName}`
-      );
-      const country = countryRes.data[0];
-      const currencyCode = Object.keys(country.currencies)[0];
-      setCountryCurrency(currencyCode);
-
-      const currencyRes = await axios.get(
-        `https://api.currencyfreaks.com/v2.0/rates/latest?apikey=YOUR_CURRENCYFREAKS_KEY`
-      );
-      const sarRate = currencyRes.data.rates["SAR"];
-      const targetRate = currencyRes.data.rates[currencyCode];
-      const rate = parseFloat(targetRate) / parseFloat(sarRate);
-      setExchangeRate(rate.toFixed(2));
-    } catch (error) {
-      console.error("Error fetching currency info:", error);
-      setCountryCurrency(null);
-      setExchangeRate(null);
-    }
   };
 
   const generatePlan = () => {
@@ -68,15 +39,14 @@ function App() {
     if (!startDate || !endDate) return alert("Please select your travel dates.");
     if (new Date(endDate) < new Date(startDate))
       return alert("End date must be after start date.");
-  
+
     const tripDays = Math.max(
       1,
       Math.ceil(
         (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
       )
     );
-  
-    // navigate to /schedule and send data
+
     navigate("/schedule", {
       state: {
         city,
@@ -88,12 +58,11 @@ function App() {
       },
     });
   };
-  
 
   return (
     <div className="app-background">
       <div className="app-container block-box">
-        <h1 className="app-title">🧠 AI Travel Planner</h1>
+        <h1 className="app-title">Travella✈️🧳</h1>
 
         <label>City:</label>
         <input
@@ -103,6 +72,7 @@ function App() {
           onChange={(e) => setCity(e.target.value)}
           className="input-style"
         />
+
         <div className="form-group">
           <label>Start Date:</label>
           <input
@@ -122,7 +92,6 @@ function App() {
             className="input-style"
           />
         </div>
-
 
         <label>Preferred Activities:</label>
         <div className="checkbox-grid">
@@ -147,17 +116,9 @@ function App() {
           className="input-style"
         />
 
-        <button onClick={generatePlan} disabled={loading} className="button-style">
-          {loading ? "Generating..." : "Generate Travel Plan"}
+        <button onClick={generatePlan} className="button-style">
+          Continue to Schedule
         </button>
-
-        {countryCurrency && exchangeRate && (
-          <p className="exchange-rate">
-            💱 1 SAR ≈ {exchangeRate} {countryCurrency}
-          </p>
-        )}
-
-        {response && <div className="response-box">{response}</div>}
       </div>
     </div>
   );
