@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
+import "./styles/Schedule.css";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 function Schedule() {
@@ -209,105 +210,107 @@ function Schedule() {
   }
 
   return (
-    <div className="app-container block-box">
-      <h2 className="app-title">
-        Custom Schedule for <span>{city}</span> 📅
-      </h2>
-
-      <button
-        className="button-style back-button"
-        onClick={() => navigate("/")}
-      >
-        ⬅️ Back to Form
-      </button>
-
-      <p className="budget-info">
-        Trip Dates: <strong>{startDate}</strong> → <strong>{endDate}</strong> | Budget: <strong>{budgetAmount} SAR</strong>
-      </p>
-
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="schedule-section">
-          <h3>📝 Day Planner</h3>
-          <table className="schedule-table">
-            <thead>
-              <tr>
-                <th>Day</th>
-                <th>Morning</th>
-                <th>Afternoon</th>
-                <th>Evening</th>
-              </tr>
-            </thead>
-            <tbody>
-              {schedule.map((day, dayIndex) => (
-                <tr key={`day-${dayIndex}`}>
-                  <td className="day-label">Day {dayIndex + 1}</td>
-                  {["morning", "afternoon", "evening"].map((timeOfDay) => (
-                    <td key={`${dayIndex}-${timeOfDay}-cell`}>
-                      <Droppable droppableId={`${dayIndex}-${timeOfDay}`} isDropDisabled={false}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.droppableProps}
-                            className={`schedule-cell ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
-                          >
-                            {day[timeOfDay] && (
-                              <div className="schedule-item">
-                                {day[timeOfDay]}
+    <div className="app-background">
+      <div className="app-container">
+        <button className="back-button" onClick={() => navigate("/")}>
+          ← Back to Home
+        </button>
+        
+        <div className="schedule-header">
+          <h2>Your Travel Schedule for {city}</h2>
+          <p>Plan your activities for each day of your trip</p>
+        </div>
+        
+        <div className="budget-info">
+          Budget: <strong>{budgetAmount} SAR</strong> | 
+          Dates: <strong>{new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}</strong>
+        </div>
+        
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="schedule-container">
+            <div className="schedule-section">
+              <table className="schedule-table">
+                <thead>
+                  <tr>
+                    <th>Day</th>
+                    <th>Morning</th>
+                    <th>Afternoon</th>
+                    <th>Evening</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule.map((day, dayIndex) => (
+                    <tr key={`day-${dayIndex}`}>
+                      <td className="day-label">Day {dayIndex + 1}</td>
+                      {["morning", "afternoon", "evening"].map((timeOfDay) => (
+                        <td key={`${dayIndex}-${timeOfDay}-cell`}>
+                          <Droppable droppableId={`${dayIndex}-${timeOfDay}`} isDropDisabled={false}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.droppableProps}
+                                className={`schedule-cell ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                              >
+                                {day[timeOfDay] && (
+                                  <div className="schedule-item">
+                                    {day[timeOfDay]}
+                                  </div>
+                                )}
+                                {provided.placeholder}
                               </div>
                             )}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </td>
+                          </Droppable>
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="activities-section">
-          <h3 className="activity-header">🎯 Available Activities in {city}</h3>
-          <Droppable droppableId="activityList">
-            {(provided) => (
-              <ul
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className="activity-list"
-              >
-                {loading ? (
-                  <li className="loading-activities">Loading activities...</li>
-                ) : activities.length > 0 ? (
-                  activities.map((activity, index) => (
-                    <Draggable
-                      key={`activity-${index}`}
-                      draggableId={`activity-${index}`}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <li
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="draggable-item"
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="activities-section">
+              <h3>Available Activities</h3>
+              <p>Drag and drop activities to your schedule</p>
+              
+              <Droppable droppableId="activityList">
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`activity-list ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                  >
+                    {loading ? (
+                      <div className="loading-activities">Loading activities...</div>
+                    ) : activities.length === 0 ? (
+                      <div className="no-activities">No activities available</div>
+                    ) : (
+                      activities.map((activity, index) => (
+                        <Draggable
+                          key={activity}
+                          draggableId={activity}
+                          index={index}
                         >
-                          {activity}
-                        </li>
-                      )}
-                    </Draggable>
-                  ))
-                ) : (
-                  <li className="no-activities">
-                    No activities found for {city}. Try different categories.
-                  </li>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`draggable-item ${snapshot.isDragging ? 'dragging' : ''}`}
+                            >
+                              {activity}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
+                    {provided.placeholder}
+                  </div>
                 )}
-                {provided.placeholder}
-              </ul>
-            )}
-          </Droppable>
-        </div>
-      </DragDropContext>
+              </Droppable>
+            </div>
+          </div>
+        </DragDropContext>
+      </div>
     </div>
   );
 }
