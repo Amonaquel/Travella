@@ -1,118 +1,115 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import "./App.css";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 function Schedule() {
-  const { state } = useLocation();
+  const location = useLocation();
+  const state = location.state;
   const navigate = useNavigate();
-  const { city, startDate, endDate, budgetAmount, selectedActivities } = state;
 
-  const [convertedBudget, setConvertedBudget] = useState(null);
-  const [currencyCode, setCurrencyCode] = useState(null);
+  // All hooks must be called unconditionally
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [schedule, setSchedule] = useState(
-    [...Array(Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))))].map(() => ({
-      morning: "",
-      afternoon: "",
-      evening: ""
-    }))
-  );
+  const [schedule, setSchedule] = useState([]);
 
-  const tripDays = schedule.length;
+  // Memoize values from state to prevent unnecessary re-renders
+  const { 
+    city, 
+    startDate, 
+    endDate, 
+    budgetAmount, 
+    selectedActivities 
+  } = useMemo(() => ({
+    city: state?.city || "",
+    startDate: state?.startDate || "",
+    endDate: state?.endDate || "",
+    budgetAmount: state?.budgetAmount || "",
+    selectedActivities: state?.selectedActivities || []
+  }), [state]);
 
+  // Handle missing state case
   useEffect(() => {
-    const fetchCurrencyAndConvert = async () => {
-      try {
-        const countryRes = await axios.get(
-          `https://restcountries.com/v3.1/capital/${city}`
-        );
-        const country = countryRes.data[0];
-        const localCurrency = Object.keys(country.currencies)[0];
-        setCurrencyCode(localCurrency);
+    if (state) {
+      // Initialize schedule from dates
+      const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)));
+      setSchedule(
+        [...Array(days)].map(() => ({
+          morning: "",
+          afternoon: "",
+          evening: ""
+        }))
+      );
+    }
+  }, [state, startDate, endDate]);
 
-        const currencyRes = await axios.get(
-          `https://api.currencyfreaks.com/v2.0/rates/latest?apikey=abc7d14c5c7a4b74932591950a82b711`
-        );
+  // Memoize the sample activities to prevent recreation on each render
+  const sampleActivities = useMemo(() => ({
+    'Museums': [
+      'National Museum',
+      'Art Gallery',
+      'Science Museum',
+      'History Museum',
+      'Modern Art Museum'
+    ],
+    'Historical Sites': [
+      'Ancient Castle',
+      'Old Town Square',
+      'Historic Cathedral',
+      'Ancient Palace',
+      'Historic Market'
+    ],
+    'Parks': [
+      'Central Park',
+      'Botanical Gardens',
+      'Riverside Park',
+      'City Park',
+      'Nature Reserve'
+    ],
+    'Shopping': [
+      'City Mall',
+      'Traditional Market',
+      'Shopping Street',
+      'Outlet Mall',
+      'Artisan Market'
+    ],
+    'Beaches': [
+      'Main Beach',
+      'Sunset Beach',
+      'Palm Beach',
+      'Golden Beach',
+      'Crystal Bay'
+    ],
+    'Food & Restaurants': [
+      'Local Food Market',
+      'Traditional Restaurant',
+      'Food Street',
+      'Fine Dining Restaurant',
+      'Street Food Market'
+    ],
+    'Cultural Events': [
+      'Local Theater',
+      'Music Hall',
+      'Cultural Center',
+      'Opera House',
+      'Arts Festival'
+    ],
+    'Adventure Sports': [
+      'Water Sports Center',
+      'Hiking Trail',
+      'Adventure Park',
+      'Rock Climbing Center',
+      'Mountain Biking Trail'
+    ]
+  }), []);
 
-        const sarRate = currencyRes.data.rates["SAR"];
-        const targetRate = currencyRes.data.rates[localCurrency];
-        const rate = parseFloat(targetRate) / parseFloat(sarRate);
-        setConvertedBudget((budgetAmount * rate).toFixed(2));
-      } catch (error) {
-        console.error("Error fetching exchange rate:", error);
-        setConvertedBudget(null);
-        setCurrencyCode(null);
-      }
-    };
-
-    fetchCurrencyAndConvert();
-  }, [city, budgetAmount]);
-
+  // Activities setup effect with properly defined dependencies
   useEffect(() => {
+    if (!state) return;
+    
     const setupActivities = () => {
       try {
         setLoading(true);
-        const sampleActivities = {
-          'Museums': [
-            'National Museum',
-            'Art Gallery',
-            'Science Museum',
-            'History Museum',
-            'Modern Art Museum'
-          ],
-          'Historical Sites': [
-            'Ancient Castle',
-            'Old Town Square',
-            'Historic Cathedral',
-            'Ancient Palace',
-            'Historic Market'
-          ],
-          'Parks': [
-            'Central Park',
-            'Botanical Gardens',
-            'Riverside Park',
-            'City Park',
-            'Nature Reserve'
-          ],
-          'Shopping': [
-            'City Mall',
-            'Traditional Market',
-            'Shopping Street',
-            'Outlet Mall',
-            'Artisan Market'
-          ],
-          'Beaches': [
-            'Main Beach',
-            'Sunset Beach',
-            'Palm Beach',
-            'Golden Beach',
-            'Crystal Bay'
-          ],
-          'Food & Restaurants': [
-            'Local Food Market',
-            'Traditional Restaurant',
-            'Food Street',
-            'Fine Dining Restaurant',
-            'Street Food Market'
-          ],
-          'Cultural Events': [
-            'Local Theater',
-            'Music Hall',
-            'Cultural Center',
-            'Opera House',
-            'Arts Festival'
-          ],
-          'Adventure Sports': [
-            'Water Sports Center',
-            'Hiking Trail',
-            'Adventure Park',
-            'Rock Climbing Center',
-            'Mountain Biking Trail'
-          ]
-        };
 
         // Calculate minimum required activities (3 per day)
         const daysCount = schedule.length;
@@ -151,34 +148,65 @@ function Schedule() {
     };
 
     setupActivities();
-  }, [city, selectedActivities, schedule.length]);
+  }, [state, city, selectedActivities, schedule.length, sampleActivities]);
 
-  const onDragEnd = (result) => {
+  // Handle drag end - with activity swapping
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
     const { source, destination } = result;
-
-    // Drop outside any droppable
-    if (!destination) return;
-
-    // Same position drop
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) return;
-
-    // Moving from activities list to schedule
-    if (source.droppableId === "activityList") {
-      const activity = activities[source.index];
-      const [dayIndex, timeOfDay] = destination.droppableId.split('-');
-      
-      const newSchedule = [...schedule];
-      newSchedule[parseInt(dayIndex)][timeOfDay] = activity;
-      setSchedule(newSchedule);
-
-      const newActivities = [...activities];
-      newActivities.splice(source.index, 1);
-      setActivities(newActivities);
+    
+    // Only handle drags from activity list to schedule
+    if (source.droppableId === "activityList" && destination.droppableId.includes("-")) {
+      try {
+        // Get the activity being dragged
+        const draggedActivity = activities[source.index];
+        
+        // Parse the destination as day-timeOfDay
+        const [dayIndex, timeOfDay] = destination.droppableId.split("-");
+        
+        // Update schedule
+        const newSchedule = [...schedule];
+        if (newSchedule[dayIndex]) {
+          // Store the existing activity if any
+          const existingActivity = newSchedule[dayIndex][timeOfDay];
+          
+          // Replace with new activity
+          newSchedule[dayIndex][timeOfDay] = draggedActivity;
+          setSchedule(newSchedule);
+          
+          // Remove dragged activity from the list
+          const newActivities = [...activities];
+          newActivities.splice(source.index, 1);
+          
+          // If there was an existing activity, add it back to the activities list
+          if (existingActivity) {
+            newActivities.push(existingActivity);
+          }
+          
+          setActivities(newActivities);
+        }
+      } catch (error) {
+        console.error("Error handling drag:", error);
+      }
     }
   };
+
+  // Render empty UI if no state
+  if (!state) {
+    return (
+      <div className="app-container block-box">
+        <h2 className="app-title">No trip data found</h2>
+        <p>Please go back and fill out the form to create a schedule.</p>
+        <button 
+          className="button-style back-button" 
+          onClick={() => navigate("/")}
+        >
+          ⬅️ Back to Form
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container block-box">
@@ -195,12 +223,9 @@ function Schedule() {
 
       <p className="budget-info">
         Trip Dates: <strong>{startDate}</strong> → <strong>{endDate}</strong> | Budget: <strong>{budgetAmount} SAR</strong>
-        {convertedBudget && currencyCode && (
-          <> | ≈ <strong>{convertedBudget} {currencyCode}</strong></>
-        )}
       </p>
 
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd}>
         <div className="schedule-section">
           <h3>📝 Day Planner</h3>
           <table className="schedule-table">
@@ -214,11 +239,11 @@ function Schedule() {
             </thead>
             <tbody>
               {schedule.map((day, dayIndex) => (
-                <tr key={dayIndex}>
+                <tr key={`day-${dayIndex}`}>
                   <td className="day-label">Day {dayIndex + 1}</td>
                   {["morning", "afternoon", "evening"].map((timeOfDay) => (
-                    <td key={timeOfDay}>
-                      <Droppable droppableId={`${dayIndex}-${timeOfDay}`}>
+                    <td key={`${dayIndex}-${timeOfDay}-cell`}>
+                      <Droppable droppableId={`${dayIndex}-${timeOfDay}`} isDropDisabled={false}>
                         {(provided, snapshot) => (
                           <div
                             ref={provided.innerRef}
@@ -247,8 +272,8 @@ function Schedule() {
           <Droppable droppableId="activityList">
             {(provided) => (
               <ul
-                {...provided.droppableProps}
                 ref={provided.innerRef}
+                {...provided.droppableProps}
                 className="activity-list"
               >
                 {loading ? (
