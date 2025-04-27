@@ -1,0 +1,7 @@
+This text file is used to document the idea we 
+want to implement after getting the feedback from the doctor.
+
+1. Add a profile icon in each page. 
+2. Add a page that has user data ( Name (Editable), Email (Editable) , Previous Plans ).
+3. Making the plan downloadable in a perfect format after its constructed.
+4. The use of Ollama.
