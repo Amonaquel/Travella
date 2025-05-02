@@ -4,6 +4,8 @@ import axios from 'axios';
 import "./App.css";
 import "./styles/Schedule.css";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 function Schedule() {
   const location = useLocation();
@@ -108,6 +110,37 @@ function Schedule() {
     }
   };
 
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text(`Travel Schedule for ${city}`, 14, 18);
+    doc.setFontSize(12);
+    doc.text(`Budget: ${convertedBudget} ${localCurrency.code}`, 14, 28);
+    doc.text(`Dates: ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`, 14, 36);
+
+    schedule.forEach((day, dayIndex) => {
+      doc.text(`Day ${dayIndex + 1}`, 14, 46 + dayIndex * 40);
+      const rows = ["morning", "afternoon", "evening"].map(timeOfDay => {
+        const activity = day[timeOfDay];
+        return [
+          timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1),
+          activity?.name || "",
+          activity?.category || "",
+          activity?.price || "",
+          activity?.currency || ""
+        ];
+      });
+      autoTable(doc, {
+        head: [["Time", "Activity", "Category", "Price", "Currency"]],
+        body: rows,
+        startY: 50 + dayIndex * 40,
+        theme: "grid"
+      });
+    });
+
+    doc.save(`Travel_Schedule_${city}.pdf`);
+  };
+
   if (!state) {
     return (
       <div className="app-container block-box">
@@ -136,7 +169,11 @@ function Schedule() {
         </div>
         
         <div className="budget-info">
-          Budget: <strong>{convertedBudget} {localCurrency.code}</strong> | 
+          Budget: <strong>{
+            convertedBudget && !isNaN(Number(convertedBudget)) && Number(convertedBudget) > 0
+              ? `${Number(convertedBudget).toLocaleString()} ${localCurrency.code}`
+              : `${state?.budgetAmount || ''} SAR`
+          }</strong> |
           Dates: <strong>{new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}</strong>
         </div>
 
@@ -222,6 +259,9 @@ function Schedule() {
             </div>
           </div>
         </DragDropContext>
+        <button className="button-style" onClick={handleDownloadPDF} style={{ marginTop: 20 }}>
+          Download Schedule as PDF
+        </button>
       </div>
     </div>
   );

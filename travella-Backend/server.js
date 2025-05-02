@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const COHERE_API_KEY = "k7fSO56e8SIz0Q1X4rSVpXGTXYFjlOVc5GhRBnwY";
+const COHERE_API_KEY = "CSLQ2Z4Gw1EevMgxJOKUODP9niIwO3wq9BnYRKmm";
 
 app.post('/api/ask', async (req, res) => {
   const { prompt } = req.body;
@@ -31,7 +31,7 @@ app.post('/api/get-activities', async (req, res) => {
   const { city, activities, days } = req.body;
 
   try {
-    const prompt = `You are a travel assistant. Given the city: ${city}, and the user's preferred activities: [${activities.join(', ')}], generate a list of activities for a trip that lasts ${days} days. Each day should have 3 different activities, for a total of ${days * 3} activities. Only use activities from the preferred list.\n\nFor each activity, provide:\n- \"name\": the name of the activity (string)\n- \"category\": the category (string)\n- \"price\": the typical price as a number (in local currency), or if free, use the number 0\n- \"currency\": the local currency code (string, e.g., \"USD\")\n\nRespond ONLY with a valid JSON array, and do not include any explanation or extra text. Example:\n[\n  {\"name\": \"The Met\", \"category\": \"Museums\", \"price\": 25, \"currency\": \"USD\"},\n  {\"name\": \"Central Park\", \"category\": \"Parks\", \"price\": 0, \"currency\": \"USD\"}\n]`;
+    const prompt = `You are a travel assistant. Given the city: ${city}, and the user's preferred activities: [${activities.join(', ')}], generate a list of activities for a trip that lasts ${days} days. Each day should have 3 different activities, for a total of ${days * 3} activities. Only use activities from the preferred list.\n\nFor each activity, provide:\n- \"name\": the name of the activity (string)\n- \"category\": the category (string)\n- \"price\": the typical price as a number (in local currency), or if free, use the number 0\n- \"currency\": the local currency code (string, e.g., \"USD\")\n\nRespond ONLY with a valid JSON array, and do NOT include any explanation, description, or extra text. Example:\n[\n  {\"name\": \"The Met\", \"category\": \"Museums\", \"price\": 25, \"currency\": \"USD\"},\n  {\"name\": \"Central Park\", \"category\": \"Parks\", \"price\": 0, \"currency\": \"USD\"}\n]`;
     console.log('Cohere get-activities prompt:', prompt);
     console.log('Cohere get-activities request body:', req.body);
 
@@ -66,11 +66,11 @@ app.post('/api/get-activities', async (req, res) => {
         console.log('Parsed activitiesData (from array match):', activitiesData);
       } else {
         console.error('Raw AI response (no array found):', aiText);
-        throw new Error('No valid JSON array found in response');
+        activitiesData = [];
       }
     } catch (e) {
       console.error('Raw AI response (unparsable):', aiText);
-      throw new Error('Invalid response format');
+      activitiesData = [];
     }
 
     // Guarantee: Any activity with price 0, '0', or 0.0 is set to 'FREE'
@@ -153,22 +153,23 @@ app.post('/api/get-currency', async (req, res) => {
 });
 
 app.post('/api/convert-currency', async (req, res) => {
-  const { city, amount, fromCurrency } = req.body;
-  console.log('Received /api/convert-currency request:', req.body);
-  if (!city || !amount || !fromCurrency) {
-    return res.status(400).json({ error: 'city, amount, and fromCurrency are required' });
-  }
-
-  const prompt = `The user has a budget of ${amount} SAR (Saudi Riyals) and is traveling to ${city}. What is the equivalent amount in the local currency of ${city}? Please respond as a JSON object with fields: currency, code, rate, and converted_amount.`;
-
   try {
+    const { amount, fromCurrency, toCurrency } = req.body;
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    // Use Cohere AI to get the exchange rate
+    const prompt = `You are a currency conversion assistant.\nGiven: \n- Source currency: ${fromCurrency}\n- Target currency: ${toCurrency}\n- Task: Provide the current exchange rate as a single numeric value, representing how many ${toCurrency} equal 1 ${fromCurrency}.\n- Example: If 1 SAR = 38.61 JPY, respond with 38.61. If 1 USD = 3.75 SAR, respond with 3.75.\nRespond ONLY with the numeric value, no words, no symbols, no explanation.`;
+    console.log('Cohere prompt:', prompt);
     const response = await axios.post(
       'https://api.cohere.ai/v1/generate',
       {
         model: "command",
         prompt: prompt,
-        max_tokens: 200,
-        temperature: 0.2,
+        max_tokens: 20,
+        temperature: 0.1,
         k: 0,
         stop_sequences: [],
         return_likelihoods: "NONE"
@@ -180,25 +181,39 @@ app.post('/api/convert-currency', async (req, res) => {
         }
       }
     );
-
-    // Extract and parse the AI's response
-    let aiText = response.data.generations[0].text;
-    let jsonMatch = aiText.match(/\{[\s\S]*\}/);
-    let currencyData;
-    if (jsonMatch) {
-      currencyData = JSON.parse(jsonMatch[0]);
-    } else {
-      currencyData = { error: 'Could not parse AI response', raw: aiText };
+    let aiText = response.data.generations[0].text.trim();
+    console.log('Raw AI response:', aiText);
+    let exchangeRate = parseFloat(aiText.match(/[-+]?[0-9]*\.?[0-9]+/));
+    console.log('Parsed exchange rate:', exchangeRate);
+    if (isNaN(exchangeRate)) {
+      return res.status(500).json({ error: 'Invalid exchange rate received from AI', aiText });
     }
-    res.json(currencyData);
-  } catch (err) {
-    console.error('Cohere error:', err.message);
-    if (err.response) {
-      console.error('Cohere error response:', err.response.data);
-    } else {
-      console.error('Cohere error full:', err);
+    // Special logic for SAR to JPY: if rate < 1, invert it
+    if (fromCurrency === 'SAR' && toCurrency === 'JPY' && exchangeRate < 1) {
+      exchangeRate = 1 / exchangeRate;
+      console.log('Inverted exchange rate for SAR→JPY:', exchangeRate);
     }
-    res.status(500).json({ error: 'Error converting currency' });
+    // Universal inversion logic for other pairs
+    const strongToWeak = [
+      { from: 'SAR', to: 'USD' },
+      { from: 'SAR', to: 'EUR' },
+      { from: 'SAR', to: 'GBP' },
+      { from: 'SAR', to: 'CAD' },
+      // Add more as needed
+    ];
+    const shouldInvert = strongToWeak.some(
+      pair => pair.from === fromCurrency && pair.to === toCurrency
+    );
+    if (shouldInvert && exchangeRate > 2 && !(fromCurrency === 'SAR' && toCurrency === 'JPY')) {
+      exchangeRate = 1 / exchangeRate;
+      console.log('Inverted exchange rate (universal logic):', exchangeRate);
+    }
+    const convertedAmount = numericAmount * exchangeRate;
+    console.log('Converted amount:', convertedAmount);
+    res.json({ convertedAmount, code: toCurrency, rate: exchangeRate });
+  } catch (error) {
+    console.error('Currency conversion error:', error);
+    res.status(500).json({ error: 'Failed to convert currency' });
   }
 });
 

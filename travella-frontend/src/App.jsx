@@ -65,25 +65,16 @@ function App() {
         setError("");
         setConvertedResult(null);
 
-        // Use Cohere endpoint for currency conversion
+        // Use backend endpoint for currency conversion
+        const toCurrency = city.toLowerCase().includes('tokyo') || city.toLowerCase().includes('japan') ? 'JPY' : 'USD'; // fallback, you can improve this
         const currencyResponse = await axios.post('http://localhost:5000/api/convert-currency', {
-          city: city,
           amount: budgetAmount,
-          fromCurrency: "SAR"
+          fromCurrency: "SAR",
+          toCurrency
         });
         const currencyData = currencyResponse.data;
-
-        // If the currency is SAR or the city is in Saudi Arabia, store SAR
-        if (
-          (currencyData.code && currencyData.code.toUpperCase() === 'SAR') ||
-          city.toLowerCase().includes('saudi') ||
-          city.toLowerCase().includes('riyadh') ||
-          city.toLowerCase().includes('jeddah')
-        ) {
-          setLocalCurrency({ currency: 'Saudi Riyal', code: 'SAR' });
-        } else {
-          setLocalCurrency({ currency: currencyData.currency, code: currencyData.code });
-        }
+        console.log('Currency data from backend:', currencyData);
+        setLocalCurrency({ currency: toCurrency === 'JPY' ? 'Japanese Yen' : 'US Dollar', code: currencyData.code });
         setConvertedResult(currencyData);
 
         const tripDays = Math.max(
@@ -100,10 +91,8 @@ function App() {
           budgetAmount: budgetAmount,
           selectedActivities,
           tripDays,
-          localCurrency: (currencyData.code && currencyData.code.toUpperCase() === 'SAR') || city.toLowerCase().includes('saudi') || city.toLowerCase().includes('riyadh') || city.toLowerCase().includes('jeddah')
-            ? { currency: 'Saudi Riyal', code: 'SAR' }
-            : { currency: currencyData.currency, code: currencyData.code },
-          convertedBudget: currencyData.converted_amount
+          localCurrency: { currency: toCurrency === 'JPY' ? 'Japanese Yen' : 'US Dollar', code: currencyData.code },
+          convertedBudget: currencyData.convertedAmount
         };
       } catch (error) {
         console.error('Error fetching currency:', error);
@@ -190,7 +179,7 @@ function App() {
 
           {convertedResult && (
             <div className="budget-info">
-              Converted Budget: <strong>{convertedResult.converted_amount} {convertedResult.code}</strong> (Rate: {convertedResult.rate})
+              Converted Budget: <strong>{convertedResult.convertedAmount} {localCurrency.code}</strong>
             </div>
           )}
 
