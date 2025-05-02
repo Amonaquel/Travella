@@ -31,14 +31,16 @@ const Signup = () => {
 
     try {
       // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
       
       // Update profile with display name
-      await updateProfile(userCredential.user, {
-        displayName: name
-      });
+      if (user) {
+        await updateProfile(user, {
+          displayName: name
+        });
+      }
       
-      navigate('/');
+      navigate('/home');
     } catch (error) {
       console.error('Signup error:', error);
       switch (error.code) {

@@ -1,17 +1,15 @@
 .schedule-container {
   display: flex;
-  gap: 50px;
-  margin-top: 40px;
-  padding: 20px;
+  gap: 2rem;
+  margin-top: 2rem;
 }
 
 .schedule-section {
-  flex: 3;
-  min-width: 0;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  padding: 30px;
+  flex: 1;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .activities-section {
@@ -77,12 +75,11 @@
 }
 
 .activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-height: 700px;
-  overflow-y: auto;
-  padding-right: 15px;
+  min-height: 200px;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 1rem;
 }
 
 .activity-list::-webkit-scrollbar {
@@ -128,101 +125,115 @@
 }
 
 .schedule-cell {
-  min-height: 120px;
-  padding: 15px;
-  background-color: white;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  background: white;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  min-height: 100px;
+  border: 2px dashed #e9ecef;
+  transition: border-color 0.2s;
 }
 
 .schedule-cell.dragging-over {
-  background-color: #e3f2fd;
-  border: 2px dashed #2196f3;
-  box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+  border-color: #3498db;
+  background: #f7f9fc;
 }
 
 .schedule-item {
-  padding: 15px 18px;
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin: 5px 0;
-  font-size: 1.1em;
-  word-break: break-word;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  transition: all 0.2s ease;
+  background: white;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .schedule-item:hover {
-  background-color: #e8eaf6;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.activity-name {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.activity-price {
+  color: #27ae60;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.activity-category {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.day-schedule {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.day-schedule h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+}
+
+.time-label {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
 }
 
 .loading-activities,
 .no-activities {
   text-align: center;
-  padding: 30px;
-  color: #6c757d;
-  background-color: #fff;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-  font-size: 1.1em;
+  padding: 2rem;
+  color: #7f8c8d;
+  background: white;
+  border-radius: 6px;
+  margin: 1rem 0;
 }
 
-.loading-activities::before {
-  content: '🔄';
-  margin-right: 10px;
-  font-size: 1.2em;
-  animation: spin 1.5s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.back-button {
-  margin-bottom: 30px;
-  padding: 12px 24px;
-  background-color: #f5f5f5;
-  color: #333;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.1em;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.back-button:hover {
-  background-color: #e0e0e0;
-  transform: translateY(-2px);
-}
-
-.back-button:active {
-  transform: translateY(0);
+.error-message {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  text-align: center;
 }
 
 .budget-info {
-  margin-bottom: 30px;
-  font-size: 1.3em;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 10px;
-  border: 2px solid #e9ecef;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
   text-align: center;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  color: #2c3e50;
 }
 
-.budget-info strong {
-  color: #3f51b5;
-  font-weight: 600;
+.back-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-button:hover {
+  color: #2980b9;
+  text-decoration: underline;
 }
 
 @media (max-width: 1200px) {

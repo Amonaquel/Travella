@@ -6,6 +6,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ForgotPassword from "./components/ForgotPassword";
 import Schedule from "./Schedule";
+import axios from 'axios';
 import "./App.css";
 
 function App() {
@@ -16,6 +17,10 @@ function App() {
     const [city, setCity] = React.useState("");
     const [budgetAmount, setBudgetAmount] = React.useState("");
     const [selectedActivities, setSelectedActivities] = React.useState([]);
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState("");
+    const [localCurrency, setLocalCurrency] = React.useState({ currency: "SAR", code: "SAR" });
+    const [convertedResult, setConvertedResult] = React.useState(null);
 
     const activities = [
       "Museums",
@@ -36,42 +41,84 @@ function App() {
       );
     };
 
-    const generatePlan = () => {
+    const handleCityChange = (e) => {
+      setCity(e.target.value);
+    };
+
+    const handleBudgetChange = (e) => {
+      const amount = e.target.value;
+      setBudgetAmount(amount);
+    };
+
+    const generatePlan = async () => {
       if (!city) return alert("Please enter a city.");
       if (selectedActivities.length === 0)
         return alert("Please select at least one activity.");
       if (!budgetAmount || parseFloat(budgetAmount) <= 0)
-        return alert("Please enter a valid budget in SAR.");
+        return alert("Please enter a valid budget.");
       if (!startDate || !endDate) return alert("Please select your travel dates.");
       if (new Date(endDate) < new Date(startDate))
         return alert("End date must be after start date.");
 
-      const tripDays = Math.max(
-        1,
-        Math.ceil(
-          (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
-        )
-      );
+      try {
+        setLoading(true);
+        setError("");
+        setConvertedResult(null);
 
-      return {
-        city,
-        startDate,
-        endDate,
-        budgetAmount,
-        selectedActivities,
-        tripDays,
-      };
-    };
-    
-    const handleContinue = () => {
-      const planData = generatePlan();
-      if (planData) {
-        navigate("/schedule", { state: planData });
+        // Use Cohere endpoint for currency conversion
+        const currencyResponse = await axios.post('http://localhost:5000/api/convert-currency', {
+          city: city,
+          amount: budgetAmount,
+          fromCurrency: "SAR"
+        });
+        const currencyData = currencyResponse.data;
+
+        // If the currency is SAR or the city is in Saudi Arabia, store SAR
+        if (
+          (currencyData.code && currencyData.code.toUpperCase() === 'SAR') ||
+          city.toLowerCase().includes('saudi') ||
+          city.toLowerCase().includes('riyadh') ||
+          city.toLowerCase().includes('jeddah')
+        ) {
+          setLocalCurrency({ currency: 'Saudi Riyal', code: 'SAR' });
+        } else {
+          setLocalCurrency({ currency: currencyData.currency, code: currencyData.code });
+        }
+        setConvertedResult(currencyData);
+
+        const tripDays = Math.max(
+          1,
+          Math.ceil(
+            (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
+          )
+        );
+
+        return {
+          city,
+          startDate,
+          endDate,
+          budgetAmount: budgetAmount,
+          selectedActivities,
+          tripDays,
+          localCurrency: (currencyData.code && currencyData.code.toUpperCase() === 'SAR') || city.toLowerCase().includes('saudi') || city.toLowerCase().includes('riyadh') || city.toLowerCase().includes('jeddah')
+            ? { currency: 'Saudi Riyal', code: 'SAR' }
+            : { currency: currencyData.currency, code: currencyData.code },
+          convertedBudget: currencyData.converted_amount
+        };
+      } catch (error) {
+        console.error('Error fetching currency:', error);
+        setError('Failed to fetch currency information. Please try again.');
+        return null;
+      } finally {
+        setLoading(false);
       }
     };
     
-    const handleCityChange = (e) => {
-      setCity(e.target.value);
+    const handleContinue = async () => {
+      const planData = await generatePlan();
+      if (planData) {
+        navigate("/schedule", { state: planData });
+      }
     };
     
     const handleStartDateChange = (e) => {
@@ -82,14 +129,12 @@ function App() {
       setEndDate(e.target.value);
     };
     
-    const handleBudgetChange = (e) => {
-      setBudgetAmount(e.target.value);
-    };
-    
     return (
       <div className="app-background">
         <div className="app-container block-box">
           <h1 className="app-title">Travella✈️🧳</h1>
+
+          {error && <div className="error-message">{error}</div>}
 
           <label>City:</label>
           <input
@@ -137,14 +182,24 @@ function App() {
           <label>Budget (in SAR):</label>
           <input
             type="number"
-            placeholder="e.g., 3000"
+            placeholder={`e.g., 3000 SAR`}
             value={budgetAmount}
             onChange={handleBudgetChange}
             className="input-style"
           />
 
-          <button onClick={handleContinue} className="button-style">
-            Continue to Schedule
+          {convertedResult && (
+            <div className="budget-info">
+              Converted Budget: <strong>{convertedResult.converted_amount} {convertedResult.code}</strong> (Rate: {convertedResult.rate})
+            </div>
+          )}
+
+          <button 
+            onClick={handleContinue} 
+            className="button-style"
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'Continue to Schedule'}
           </button>
         </div>
       </div>
@@ -158,9 +213,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+          <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
           <Route path="/schedule" element={<PrivateRoute><Schedule /></PrivateRoute>} />
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </AuthProvider>
     </Router>
