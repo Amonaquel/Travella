@@ -236,6 +236,45 @@
   text-decoration: underline;
 }
 
+.schedule-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.save-button, .download-button {
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #45a049;
+}
+
+.save-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.download-button {
+  background-color: #2196F3;
+  color: white;
+}
+
+.download-button:hover {
+  background-color: #1976D2;
+}
+
 @media (max-width: 1200px) {
   .schedule-container {
     flex-direction: column;

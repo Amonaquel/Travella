@@ -6,16 +6,19 @@ import "./styles/Schedule.css";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useAuth } from "./contexts/AuthContext";
 
 function Schedule() {
   const location = useLocation();
   const state = location.state;
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [schedule, setSchedule] = useState([]);
+  const [saving, setSaving] = useState(false);
 
   const { 
     city, 
@@ -141,6 +144,42 @@ function Schedule() {
     doc.save(`Travel_Schedule_${city}.pdf`);
   };
 
+  // Save schedule to backend
+  const saveSchedule = async () => {
+    if (!currentUser) {
+      alert('Please log in to save your schedule');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const scheduleData = {
+        userId: currentUser.uid,
+        city,
+        startDate,
+        endDate,
+        budgetAmount: state?.budgetAmount,
+        selectedActivities,
+        tripDays: days,
+        localCurrency,
+        convertedBudget,
+        schedule: schedule.map(day => ({
+          morning: day.morning?.name || '',
+          afternoon: day.afternoon?.name || '',
+          evening: day.evening?.name || ''
+        }))
+      };
+
+      await axios.post('http://localhost:5000/api/schedules', scheduleData);
+      alert('Schedule saved successfully!');
+    } catch (error) {
+      console.error('Error saving schedule:', error);
+      alert('Failed to save schedule. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!state) {
     return (
       <div className="app-container block-box">
@@ -259,9 +298,22 @@ function Schedule() {
             </div>
           </div>
         </DragDropContext>
-        <button className="button-style" onClick={handleDownloadPDF} style={{ marginTop: 20 }}>
-          Download Schedule as PDF
-        </button>
+
+        <div className="schedule-actions">
+          <button 
+            className="button-style save-button" 
+            onClick={saveSchedule}
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : 'Save Schedule'}
+          </button>
+          <button 
+            className="button-style download-button" 
+            onClick={handleDownloadPDF}
+          >
+            Download PDF
+          </button>
+        </div>
       </div>
     </div>
   );

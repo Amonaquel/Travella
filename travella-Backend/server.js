@@ -2,10 +2,43 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+// MongoDB connection
+mongoose.connect('mongodb://127.0.0.1:27017/travella', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+// Schedule Schema
+const scheduleSchema = new mongoose.Schema({
+  userId: String,
+  city: String,
+  startDate: Date,
+  endDate: Date,
+  budgetAmount: Number,
+  selectedActivities: [String],
+  tripDays: Number,
+  localCurrency: {
+    currency: String,
+    code: String
+  },
+  convertedBudget: Number,
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Schedule = mongoose.model('Schedule', scheduleSchema);
 
 const COHERE_API_KEY = "";
 
@@ -169,10 +202,14 @@ app.post('/api/convert-currency', async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    // Use exchangerate-api /pair endpoint for direct conversion
     const apiKey = '';
     const url = `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${fromCurrency}/${toCurrency}`;
     const response = await axios.get(url);
+
+    // Check for API error in the response
+    if (response.data.result !== 'success') {
+      return res.status(500).json({ error: response.data['error-type'] || 'Failed to fetch exchange rate' });
+    }
 
     const rate = response.data.conversion_rate;
     if (!rate) {
@@ -186,7 +223,7 @@ app.post('/api/convert-currency', async (req, res) => {
       rate: rate.toFixed(4)
     });
   } catch (error) {
-    console.error('Currency conversion error:', error);
+    console.error('Currency conversion error:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to convert currency' });
   }
 });
@@ -218,6 +255,49 @@ app.get('/api/convert-currency', async (req, res) => {
   } catch (error) {
     console.error('Currency conversion error:', error);
     res.status(500).json({ error: 'Failed to convert currency' });
+  }
+});
+
+// Save user schedule
+app.post('/api/schedules', async (req, res) => {
+  try {
+    const scheduleData = {
+      ...req.body,
+      startDate: new Date(req.body.startDate),
+      endDate: new Date(req.body.endDate)
+    };
+    
+    const schedule = new Schedule(scheduleData);
+    await schedule.save();
+    
+    res.status(201).json(schedule);
+  } catch (error) {
+    console.error('Error saving schedule:', error);
+    res.status(500).json({ error: 'Failed to save schedule' });
+  }
+});
+
+// Get user schedules
+app.get('/api/schedules/:userId', async (req, res) => {
+  try {
+    const schedules = await Schedule.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 }); // Sort by newest first
+    
+    res.json(schedules);
+  } catch (error) {
+    console.error('Error fetching schedules:', error);
+    res.status(500).json({ error: 'Failed to fetch schedules' });
+  }
+});
+
+// Delete user schedule
+app.delete('/api/schedules/:scheduleId', async (req, res) => {
+  try {
+    await Schedule.findByIdAndDelete(req.params.scheduleId);
+    res.status(200).json({ message: 'Schedule deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting schedule:', error);
+    res.status(500).json({ error: 'Failed to delete schedule' });
   }
 });
 

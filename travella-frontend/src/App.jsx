@@ -6,6 +6,8 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ForgotPassword from "./components/ForgotPassword";
 import Schedule from "./Schedule";
+import UserProfile from "./components/UserProfile";
+import Navigation from "./components/Navigation";
 import axios from 'axios';
 import "./App.css";
 
@@ -198,14 +200,28 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <Navigation />
         <Routes>
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
-          <Route path="/schedule" element={<PrivateRoute><Schedule /></PrivateRoute>} />
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route
+            path="/schedule"
+            element={
+              <PrivateRoute>
+                <Schedule />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <UserProfile />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
     </Router>
