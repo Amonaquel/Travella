@@ -1,4 +1,3 @@
-# Travella
 # ✈️ Travella
 
 Travella is a full-stack web application that aims to simplify the travel planning process for users by offering a platform where they can explore destinations, build detailed travel itineraries, and manage trip information — all in one place.
