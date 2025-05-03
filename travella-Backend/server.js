@@ -7,22 +7,31 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const COHERE_API_KEY = "CSLQ2Z4Gw1EevMgxJOKUODP9niIwO3wq9BnYRKmm";
+const COHERE_API_KEY = "";
 
 app.post('/api/ask', async (req, res) => {
   const { prompt } = req.body;
 
   try {
-    const response = await axios.post('http://127.0.0.1:11434/api/generate', {
-      model: "llama2",
+    const response = await axios.post('https://api.cohere.ai/v1/generate', {
+      model: "command",
       prompt: prompt,
-      stream: false
+      max_tokens: 300,
+      temperature: 0.7,
+      k: 0,
+      stop_sequences: [],
+      return_likelihoods: "NONE"
+    }, {
+      headers: {
+        "Authorization": `Bearer ${COHERE_API_KEY}`,
+        "Content-Type": "application/json"
+      }
     });
 
-    res.json({ reply: response.data.response });
+    res.json({ reply: response.data.generations[0].text });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Ollama error");
+    res.status(500).send("Cohere API error");
   }
 });
 
@@ -113,31 +122,31 @@ app.post('/api/get-currency', async (req, res) => {
   try {
     const prompt = `What is the local currency used in ${city}? Provide the response as a JSON object with 'currency' and 'code' fields.`;
     
-    let response;
-    try {
-      response = await axios.post('http://127.0.0.1:11434/api/generate', {
-        model: "llama2",
-        prompt: prompt,
-        stream: false
-      });
-    } catch (ollamaErr) {
-      console.error('Ollama request error:', ollamaErr.message);
-      if (ollamaErr.response) {
-        console.error('Ollama error response:', ollamaErr.response.data);
+    const response = await axios.post('https://api.cohere.ai/v1/generate', {
+      model: "command",
+      prompt: prompt,
+      max_tokens: 100,
+      temperature: 0.2,
+      k: 0,
+      stop_sequences: [],
+      return_likelihoods: "NONE"
+    }, {
+      headers: {
+        "Authorization": `Bearer ${COHERE_API_KEY}`,
+        "Content-Type": "application/json"
       }
-      throw ollamaErr;
-    }
+    });
 
-    // Log the raw response from Ollama
-    console.log('Ollama raw response:', response.data.response);
+    // Log the raw response from Cohere
+    console.log('Cohere raw response:', response.data.generations[0].text);
 
     // Parse the response and ensure it's valid JSON
     let currencyData;
     try {
-      currencyData = JSON.parse(response.data.response);
+      currencyData = JSON.parse(response.data.generations[0].text);
     } catch (e) {
       // If parsing fails, try to extract JSON from the text
-      const jsonMatch = response.data.response.match(/\{[\s\S]*\}/);
+      const jsonMatch = response.data.generations[0].text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         currencyData = JSON.parse(jsonMatch[0]);
       } else {
@@ -160,57 +169,52 @@ app.post('/api/convert-currency', async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    // Use Cohere AI to get the exchange rate
-    const prompt = `You are a currency conversion assistant.\nGiven: \n- Source currency: ${fromCurrency}\n- Target currency: ${toCurrency}\n- Task: Provide the current exchange rate as a single numeric value, representing how many ${toCurrency} equal 1 ${fromCurrency}.\n- Example: If 1 SAR = 38.61 JPY, respond with 38.61. If 1 USD = 3.75 SAR, respond with 3.75.\nRespond ONLY with the numeric value, no words, no symbols, no explanation.`;
-    console.log('Cohere prompt:', prompt);
-    const response = await axios.post(
-      'https://api.cohere.ai/v1/generate',
-      {
-        model: "command",
-        prompt: prompt,
-        max_tokens: 20,
-        temperature: 0.1,
-        k: 0,
-        stop_sequences: [],
-        return_likelihoods: "NONE"
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${COHERE_API_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-    let aiText = response.data.generations[0].text.trim();
-    console.log('Raw AI response:', aiText);
-    let exchangeRate = parseFloat(aiText.match(/[-+]?[0-9]*\.?[0-9]+/));
-    console.log('Parsed exchange rate:', exchangeRate);
-    if (isNaN(exchangeRate)) {
-      return res.status(500).json({ error: 'Invalid exchange rate received from AI', aiText });
+    // Use exchangerate-api /pair endpoint for direct conversion
+    const apiKey = '';
+    const url = `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${fromCurrency}/${toCurrency}`;
+    const response = await axios.get(url);
+
+    const rate = response.data.conversion_rate;
+    if (!rate) {
+      return res.status(500).json({ error: 'Failed to fetch exchange rate' });
     }
-    // Special logic for SAR to JPY: if rate < 1, invert it
-    if (fromCurrency === 'SAR' && toCurrency === 'JPY' && exchangeRate < 1) {
-      exchangeRate = 1 / exchangeRate;
-      console.log('Inverted exchange rate for SAR→JPY:', exchangeRate);
+
+    const convertedAmount = numericAmount * rate;
+    res.json({
+      convertedAmount: convertedAmount.toFixed(2),
+      code: toCurrency,
+      rate: rate.toFixed(4)
+    });
+  } catch (error) {
+    console.error('Currency conversion error:', error);
+    res.status(500).json({ error: 'Failed to convert currency' });
+  }
+});
+
+// GET endpoint for currency conversion (for testing)
+app.get('/api/convert-currency', async (req, res) => {
+  try {
+    const { amount, fromCurrency, toCurrency } = req.query;
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+      return res.status(400).json({ error: 'Invalid amount' });
     }
-    // Universal inversion logic for other pairs
-    const strongToWeak = [
-      { from: 'SAR', to: 'USD' },
-      { from: 'SAR', to: 'EUR' },
-      { from: 'SAR', to: 'GBP' },
-      { from: 'SAR', to: 'CAD' },
-      // Add more as needed
-    ];
-    const shouldInvert = strongToWeak.some(
-      pair => pair.from === fromCurrency && pair.to === toCurrency
-    );
-    if (shouldInvert && exchangeRate > 2 && !(fromCurrency === 'SAR' && toCurrency === 'JPY')) {
-      exchangeRate = 1 / exchangeRate;
-      console.log('Inverted exchange rate (universal logic):', exchangeRate);
+
+    const apiKey = '';
+    const url = `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${fromCurrency}/${toCurrency}`;
+    const response = await axios.get(url);
+
+    const rate = response.data.conversion_rate;
+    if (!rate) {
+      return res.status(500).json({ error: 'Failed to fetch exchange rate' });
     }
-    const convertedAmount = numericAmount * exchangeRate;
-    console.log('Converted amount:', convertedAmount);
-    res.json({ convertedAmount, code: toCurrency, rate: exchangeRate });
+
+    const convertedAmount = numericAmount * rate;
+    res.json({
+      convertedAmount: convertedAmount.toFixed(2),
+      code: toCurrency,
+      rate: rate.toFixed(4)
+    });
   } catch (error) {
     console.error('Currency conversion error:', error);
     res.status(500).json({ error: 'Failed to convert currency' });
