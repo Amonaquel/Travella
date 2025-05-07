@@ -40,7 +40,7 @@ const scheduleSchema = new mongoose.Schema({
 
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 
-const COHERE_API_KEY = "";
+const COHERE_API_KEY = "SOp5BfiBVRwTeMbn0fQHqCdOmkHzkQPh0nUKwKh2";
 
 app.post('/api/ask', async (req, res) => {
   const { prompt } = req.body;
@@ -202,7 +202,7 @@ app.post('/api/convert-currency', async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    const apiKey = '';
+    const apiKey = 'bd6d834aa92a6e955697e763';
     const url = `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${fromCurrency}/${toCurrency}`;
     const response = await axios.get(url);
 
@@ -237,7 +237,7 @@ app.get('/api/convert-currency', async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    const apiKey = '';
+    const apiKey = 'bd6d834aa92a6e955697e763';
     const url = `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${fromCurrency}/${toCurrency}`;
     const response = await axios.get(url);
 

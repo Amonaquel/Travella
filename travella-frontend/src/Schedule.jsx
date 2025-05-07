@@ -198,7 +198,7 @@ function Schedule() {
   return (
     <div className="app-background">
       <div className="app-container">
-        <button className="back-button" onClick={() => navigate("/home")}>
+        <button className="back-button" onClick={() => navigate("/")}>
           ← Back to Home
         </button>
         

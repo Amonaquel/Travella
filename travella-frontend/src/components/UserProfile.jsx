@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -11,7 +12,8 @@ function getDisplayName(email) {
 }
 
 function UserProfile() {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [userSchedules, setUserSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -60,6 +62,15 @@ function UserProfile() {
     doc.save(`Travel_Schedule_${schedule.city}.pdf`);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (!currentUser) {
     return <div className="profile-container">Please log in to view your profile.</div>;
   }
@@ -76,6 +87,9 @@ function UserProfile() {
           <h1>{displayName}</h1>
           <p className="profile-email"><strong>Email:</strong> {currentUser.email}</p>
           <p className="profile-id"><strong>User ID:</strong> {currentUser.uid}</p>
+          <button className="logout-button" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </div>
       <hr className="profile-divider" />
