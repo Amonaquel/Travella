@@ -1,0 +1,21 @@
+{
+  "files": {
+    "main.css": "/Travella/static/css/main.13d4e89e.css",
+    "main.js": "/Travella/static/js/main.d5a606f0.js",
+    "static/js/239.df0227d0.chunk.js": "/Travella/static/js/239.df0227d0.chunk.js",
+    "static/js/977.cd61cb1d.chunk.js": "/Travella/static/js/977.cd61cb1d.chunk.js",
+    "static/js/732.2c2e9b8d.chunk.js": "/Travella/static/js/732.2c2e9b8d.chunk.js",
+    "static/js/453.585d2ee0.chunk.js": "/Travella/static/js/453.585d2ee0.chunk.js",
+    "index.html": "/Travella/index.html",
+    "main.13d4e89e.css.map": "/Travella/static/css/main.13d4e89e.css.map",
+    "main.d5a606f0.js.map": "/Travella/static/js/main.d5a606f0.js.map",
+    "239.df0227d0.chunk.js.map": "/Travella/static/js/239.df0227d0.chunk.js.map",
+    "977.cd61cb1d.chunk.js.map": "/Travella/static/js/977.cd61cb1d.chunk.js.map",
+    "732.2c2e9b8d.chunk.js.map": "/Travella/static/js/732.2c2e9b8d.chunk.js.map",
+    "453.585d2ee0.chunk.js.map": "/Travella/static/js/453.585d2ee0.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.13d4e89e.css",
+    "static/js/main.d5a606f0.js"
+  ]
+}
