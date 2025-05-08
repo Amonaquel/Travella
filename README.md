@@ -24,4 +24,4 @@ MongoDB schema definitions was created by the help of **geeksforgeeks**
 This project includes some functions generated with the help of AI, particularly:
 
 Drag and Drop API Integration
-PDF generation and formatting Inegration
+PDF generation and formatting Inegration.
