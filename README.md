@@ -2,18 +2,18 @@ Screenshots:
 
 Login& signUp:
 
-![signup](<لقطة الشاشة 2025-05-08 135946.png>)
-![Login](<لقطة الشاشة 2025-05-08 135929.png>)
+![signup](<images/لقطة الشاشة 2025-05-08 135946.png>)
+![Login](< images/لقطة الشاشة 2025-05-08 135929.png>)
 
 Home:
-![Home](<لقطة الشاشة 2025-05-08 135740.png>)
+![Home](<images/لقطة الشاشة 2025-05-08 135740.png>)
 
 Schedule:
-![Schedule](<لقطة الشاشة 2025-05-08 135835.png>)
+![Schedule](<images/لقطة الشاشة 2025-05-08 135835.png>)
 
 Userpage:
 
-![Account](<لقطة الشاشة 2025-05-08 135910.png>)
+![Account](<images/لقطة الشاشة 2025-05-08 135910.png>)
 
 
 Disclosure
