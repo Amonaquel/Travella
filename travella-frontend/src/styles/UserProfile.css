@@ -122,6 +122,22 @@
   margin: 1rem 0;
 }
 
+.logout-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #c0392b;
+}
+
 @media (max-width: 600px) {
   .profile-container {
     padding: 1rem 0.2rem;

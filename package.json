@@ -1,13 +1,16 @@
 {
-  "name": "travella",
+  "name": "react-gh-pages",
+  "homepage": "https://Amonaquel.github.io/Travella",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "deploy": "gh-pages -d build",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build"
   },
   "dependencies": {
     "react": "^19.0.0",

@@ -40,7 +40,7 @@ const Signup = () => {
         });
       }
       
-      navigate('/home');
+      navigate('/');
     } catch (error) {
       console.error('Signup error:', error);
       switch (error.code) {

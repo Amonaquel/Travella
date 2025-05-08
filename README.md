@@ -1,37 +1,27 @@
-# ✈️ Travella
+Screenshots:
 
-Travella is a full-stack web application that aims to simplify the travel planning process for users by offering a platform where they can explore destinations, build detailed travel itineraries, and manage trip information — all in one place.
+Login& signUp:
 
-The project is designed for individuals, families, and groups who want to streamline their travel experience with an intuitive and interactive interface. Users can log in to their accounts, browse curated destinations, and use tools like maps and customizable day planners to organize each aspect of their journey.
+![signup](<لقطة الشاشة 2025-05-08 135946.png>)
+![Login](<لقطة الشاشة 2025-05-08 135929.png>)
 
-Unlike traditional travel sites, Travella focuses on **user flexibility and trip visualization**, allowing people to plan not just *where* to go, but *how* they will spend their time once there. Whether it's booking a museum tour, allocating free time for relaxation, or grouping sightseeing spots by proximity, Travella provides the structure and tools to support efficient planning.
+Home:
+![Home](<لقطة الشاشة 2025-05-08 135740.png>)
 
-The frontend provides a responsive and modern interface built using React, while the backend API — built on Node.js and Express — handles user management, itinerary storage, and destination data. MongoDB serves as the database layer, offering scalable and flexible document-based storage.
+Schedule:
+![Schedule](<لقطة الشاشة 2025-05-08 135835.png>)
 
-## 🌟 Features
+Userpage:
 
-- **Destination Discovery**: Browse a variety of locations with detailed information, descriptions, and visuals.
-- **Itinerary Builder**: Create day-by-day plans with the ability to add activities, locations, and time estimates.
-- **User Accounts**: Register and log in to save your trips and view/edit them later.
-- **Interactive Maps**: Visualize travel routes and activity locations to minimize travel time and maximize enjoyment.
-- **Responsive Design**: Use Travella on desktop, tablet, or mobile with a consistent experience.
+![Account](<لقطة الشاشة 2025-05-08 135910.png>)
 
-## 🛠️ Tech Stack
 
-**Frontend**  
-- React  
-- Vite  
-- CSS3
+Disclosure
 
-**Backend**  
-- Node.js  
-- Express.js  
-- MongoDB
+MongoDB schema definitions was created by the help of **geeksforgeeks**
+ https://www.geeksforgeeks.org/how-to-connect-mongodb-with-reactjs/
 
-## 📁 Project Structure
+This project includes some functions generated with the help of AI, particularly:
 
-- `travella-frontend/` — React-based frontend  
-- `travella-backend/` — Express-based backend  
-- `Future Plans.txt` — Notes on upcoming features  
-- `README.md` — Project documentation
-
+Drag and Drop API Integration
+PDF generation and formatting Inegration
